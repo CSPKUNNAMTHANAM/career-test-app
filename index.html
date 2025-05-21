@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Career Aptitude Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f6f8;
+      padding: 30px;
+    }
+    .container {
+      max-width: 600px;
+      margin: auto;
+      background: #fff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h2 {
+      text-align: center;
+      color: #2a4d69;
+    }
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: bold;
+    }
+    input, select {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+    button {
+      margin-top: 20px;
+      padding: 12px;
+      width: 100%;
+      background-color: #2a4d69;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #1e3651;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Career Aptitude Test - Step 1</h2>
+    <form id="basicForm">
+      <label for="name">Full Name</label>
+      <input type="text" id="name" required />
+
+      <label for="address">Address</label>
+      <input type="text" id="address" required />
+
+      <label for="phone">Phone Number</label>
+      <input type="tel" id="phone" pattern="[0-9]{10}" required />
+
+      <label for="email">Email ID</label>
+      <input type="email" id="email" required />
+
+      <label for="qualification">Highest Qualification</label>
+      <select id="qualification" required>
+        <option value="">Select</option>
+        <option value="sslc">SSLC</option>
+        <option value="plus2">Plus Two</option>
+        <option value="iti">ITI</option>
+        <option value="polytechnic">Polytechnic</option>
+        <option value="degree">Degree</option>
+        <option value="pg">Post Graduation</option>
+      </select>
+
+      <button type="submit">Next</button>
+    </form>
+  </div>
+
+  <script>
+    document.getElementById('basicForm').addEventListener('submit', function(event) {
+      event.preventDefault();
+
+      const userData = {
+        name: document.getElementById('name').value,
+        address: document.getElementById('address').value,
+        phone: document.getElementById('phone').value,
+        email: document.getElementById('email').value,
+        qualification: document.getElementById('qualification').value,
+      };
+
+      // Save to localStorage (we'll use this later)
+      localStorage.setItem('userData', JSON.stringify(userData));
+
+      // Redirect to questions page
+      window.location.href = "questions.html";
+    });
+  </script>
+</body>
+</html>
