@@ -209,4 +209,119 @@
     // Send data to Google Sheet via Apps Script Web App POST
     const postData = {
       name: userData.name,
-     
+      address: userData.address,
+      phone: userData.phone,
+      email: userData.email,
+      qualification: userData.qualification,
+      answers: userAnswers
+    };
+
+    // Replace this with your deployed Google Apps Script Web App URL
+    const googleSheetUrl = "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE";
+
+    fetch(googleSheetUrl, {
+      method: 'POST',
+      body: JSON.stringify(postData),
+      headers: { 'Content-Type': 'application/json' }
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.result === "success") {
+        showResult();
+      } else {
+        alert("Failed to submit data. Please try again later.");
+      }
+    })
+    .catch(() => {
+      alert("Error submitting data. Check your internet connection.");
+    });
+  });
+
+  // Analyze answers and suggest careers globally
+  function analyzeAnswers(answers) {
+    // Dummy scoring - You should replace this with detailed analysis logic
+    // We'll classify answers into 5 clusters and pick top 3 clusters
+    // Example clusters:
+    const clusters = {
+      "Engineering & Technology": 0,
+      "Healthcare & Medicine": 0,
+      "Creative Arts & Design": 0,
+      "Business & Management": 0,
+      "Science & Research": 0
+    };
+
+    // Map question indices to clusters roughly
+    // Let's assume first 5 questions relate to Engineering,
+    // next 5 Healthcare, next 5 Creative Arts, etc.
+
+    answers.forEach((score, idx) => {
+      if(idx < 5) clusters["Engineering & Technology"] += score;
+      else if(idx < 10) clusters["Healthcare & Medicine"] += score;
+      else if(idx < 15) clusters["Creative Arts & Design"] += score;
+      else if(idx < 20) clusters["Business & Management"] += score;
+      else clusters["Science & Research"] += score;
+    });
+
+    // Sort clusters by score descending
+    const sorted = Object.entries(clusters).sort((a,b) => b[1]-a[1]);
+
+    return sorted.slice(0,3).map(item => item[0]); // top 3 career fields
+  }
+
+  function showResult() {
+    questionsSection.style.display = 'none';
+    resultSection.style.display = 'block';
+
+    const topCareers = analyzeAnswers(userAnswers);
+
+    let html = `<p>Dear <b>${userData.name}</b>, based on your answers, the top 3 career fields best suited for you are:</p><ol>`;
+    topCareers.forEach(career => {
+      html += `<li><b>${career}</b>: ${getCareerDescription(career)}</li>`;
+    });
+    html += "</ol><p>Explore these fields globally for exciting career opportunities!</p>";
+
+    resultContent.innerHTML = html;
+  }
+
+  function getCareerDescription(career) {
+    const descriptions = {
+      "Engineering & Technology": "Careers involving designing, building, and innovating technology including software, hardware, civil, mechanical, and electrical fields.",
+      "Healthcare & Medicine": "Careers focused on medical services, nursing, research, therapy, and healthcare technology.",
+      "Creative Arts & Design": "Careers in visual arts, graphic design, fashion, media, writing, and creative content production.",
+      "Business & Management": "Careers in entrepreneurship, finance, marketing, HR, and organizational leadership.",
+      "Science & Research": "Careers involving scientific research, laboratory work, environmental science, and academia."
+    };
+    return descriptions[career] || "Diverse and rewarding career opportunities.";
+  }
+
+  // Download result as PDF
+  downloadPdfBtn.addEventListener('click', () => {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    doc.setFontSize(16);
+    doc.text("Career Aptitude Test Results", 20, 20);
+    doc.setFontSize(12);
+    doc.text(`Name: ${userData.name}`, 20, 30);
+    doc.text(`Qualification: ${userData.qualification.toUpperCase()}`, 20, 40);
+
+    let y = 50;
+    const careers = analyzeAnswers(userAnswers);
+    doc.text("Top 3 Suggested Career Fields:", 20, y);
+    y += 10;
+    careers.forEach((career, idx) => {
+      doc.text(`${idx+1}. ${career}`, 20, y);
+      y += 10;
+      const desc = getCareerDescription(career);
+      // split long description in multiple lines
+      const lines = doc.splitTextToSize(desc, 170);
+      doc.text(lines, 25, y);
+      y += lines.length * 10;
+    });
+
+    doc.save("Career_Aptitude_Result.pdf");
+  });
+</script>
+
+</body>
+</html>
