@@ -50,19 +50,19 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
-  // Read answers from sessionStorage
   const answers = JSON.parse(sessionStorage.getItem('careerTestAnswers'));
-  if (!answers || answers.length === 0) {
-    document.getElementById('resultContainer').innerHTML = "<p>No answers found. Please take the test first.</p>";
+  const userDetails = JSON.parse(sessionStorage.getItem('userDetails'));
+  const scriptURL = "https://script.google.com/macros/s/AKfycbyTfpWIHFXR6eWOAD9FlufywVcjgB2OoPkM3wPzOw8/dev";
+
+  if (!answers || !userDetails) {
+    document.getElementById('resultContainer').innerHTML = "<p>Missing data. Please complete the test first.</p>";
     document.getElementById('downloadBtn').style.display = 'none';
-    throw new Error("No answers found");
+    throw new Error("Missing answers or user details");
   }
 
-  // Define career clusters with related question indices and weights
-  // Example: You will need to adjust these according to your question design
   const careerClusters = {
     "Engineering & Technology": [0, 4, 10, 21, 24],
-    "Healthcare & Medicine": [14, 18, 14, 22],
+    "Healthcare & Medicine": [14, 18, 22],
     "Creative Arts & Design": [5, 16],
     "Business & Management": [12, 9, 19],
     "Environment & Agriculture": [11, 20],
@@ -74,7 +74,6 @@
     "Animal Care & Veterinary": [20]
   };
 
-  // Sample ASAP Kerala courses mapped to clusters (adjust as per actual courses)
   const asapCourses = {
     "Engineering & Technology": ["EVST Hykon Electrical Technician", "Solar Technician"],
     "Healthcare & Medicine": ["Basic Health Care", "Pharmacy Assistant"],
@@ -89,7 +88,6 @@
     "Animal Care & Veterinary": ["Animal Husbandry"]
   };
 
-  // Calculate total scores for each career cluster
   const clusterScores = {};
   for (const cluster in careerClusters) {
     let sum = 0;
@@ -101,14 +99,14 @@
     clusterScores[cluster] = sum;
   }
 
-  // Get top 3 career clusters sorted by score descending
   const topClusters = Object.entries(clusterScores)
     .sort((a,b) => b[1] - a[1])
     .slice(0,3);
 
-  // Generate HTML output
   const resultContainer = document.getElementById('resultContainer');
   resultContainer.innerHTML = `<h2>Top 3 Career Fields For You</h2>`;
+  let pdfContent = `Top 3 Career Fields For You:\n\n`;
+
   topClusters.forEach(([cluster, score], i) => {
     resultContainer.innerHTML += `<h3>${i+1}. ${cluster} (Score: ${score})</h3>`;
     const courses = asapCourses[cluster] || [];
@@ -117,36 +115,58 @@
     } else {
       resultContainer.innerHTML += `<p>No ASAP Kerala courses available for this field.</p>`;
     }
+
+    pdfContent += `${i+1}. ${cluster} (Score: ${score})\n`;
+    if (courses.length > 0) {
+      pdfContent += "Relevant ASAP Kerala courses:\n" + courses.map(c => `- ${c}`).join('\n') + "\n\n";
+    } else {
+      pdfContent += "No ASAP Kerala courses available for this field.\n\n";
+    }
   });
 
-  // Also add a personalized note or suggestions if you want here
+  // Submit to Google Sheet
+  const data = {
+    name: userDetails.name || "",
+    email: userDetails.email || "",
+    phone: userDetails.phone || "",
+    address: userDetails.address || "",
+    qualification: userDetails.qualification || "",
+    result1: topClusters[0] ? topClusters[0][0] : "",
+    result2: topClusters[1] ? topClusters[1][0] : "",
+    result3: topClusters[2] ? topClusters[2][0] : "",
+  };
 
-  // PDF download functionality using jsPDF
+  fetch(scriptURL, {
+    method: "POST",
+    mode: "no-cors",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(data)
+  }).then(() => {
+    console.log("Data sent to Google Sheet");
+  }).catch(err => console.error("Error sending to Google Sheet", err));
+
+  // PDF Download
   document.getElementById('downloadBtn').addEventListener('click', () => {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
-
     doc.setFontSize(18);
     doc.text("Career Aptitude Test Results", 14, 22);
     doc.setFontSize(12);
+    doc.text(`Name: ${data.name}`, 14, 32);
+    doc.text(`Email: ${data.email}`, 14, 38);
+    doc.text(`Phone: ${data.phone}`, 14, 44);
+    doc.text(`Qualification: ${data.qualification}`, 14, 50);
 
-    let y = 40;
-    topClusters.forEach(([cluster, score], i) => {
-      doc.text(`${i+1}. ${cluster} (Score: ${score})`, 14, y);
-      y += 8;
-      const courses = asapCourses[cluster] || [];
-      if (courses.length > 0) {
-        doc.text("Relevant ASAP Kerala courses:", 14, y);
-        y += 8;
-        courses.forEach(course => {
-          doc.text("- " + course, 18, y);
-          y += 8;
-        });
-      } else {
-        doc.text("No ASAP Kerala courses available for this field.", 14, y);
-        y += 8;
+    let y = 60;
+    pdfContent.split("\n").forEach(line => {
+      if (y > 280) {
+        doc.addPage();
+        y = 20;
       }
-      y += 5;
+      doc.text(line, 14, y);
+      y += 8;
     });
 
     doc.save("Career_Aptitude_Results.pdf");
