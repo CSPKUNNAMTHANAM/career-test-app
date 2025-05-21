@@ -1,147 +1,157 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Career Aptitude - Results</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f8f9fa;
-      padding: 30px;
-    }
-    .container {
-      max-width: 800px;
-      margin: auto;
-      background: white;
-      padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 0 15px rgba(0,0,0,0.1);
-    }
-    h2 {
-      color: #2a4d69;
-    }
-    .career {
-      margin-bottom: 20px;
-    }
-    .career h3 {
-      margin: 10px 0 5px;
-      color: #1e3651;
-    }
-    .career p {
-      margin: 5px 0;
-    }
-    button {
-      margin-top: 30px;
-      padding: 12px;
-      background-color: #2a4d69;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #1e3651;
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Career Aptitude Test Results</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #eef3f7;
+    padding: 30px;
+    max-width: 700px;
+    margin: auto;
+  }
+  h1 {
+    color: #0a4d68;
+    text-align: center;
+  }
+  .result-section {
+    background: white;
+    padding: 25px;
+    margin-top: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgb(0 0 0 / 0.1);
+  }
+  button {
+    background-color: #0a4d68;
+    color: white;
+    border: none;
+    padding: 10px 25px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1rem;
+    margin-top: 20px;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+  }
+</style>
 </head>
 <body>
-  <div class="container">
-    <h2>Your Career Aptitude Results</h2>
-    <div id="resultArea"></div>
-    <button onclick="downloadResult()">Download PDF</button>
-  </div>
 
-  <script>
-    const userData = JSON.parse(localStorage.getItem('userData'));
-    const responses = JSON.parse(localStorage.getItem('responses'));
+<h1>Your Career Aptitude Results</h1>
 
-    const averageScore = responses.reduce((a, b) => a + b, 0) / responses.length;
+<div class="result-section" id="resultContainer">
+  <p>Analyzing your answers...</p>
+</div>
 
-    // Sample career clusters with keywords
-    const careerClusters = [
-      {
-        title: "Creative & Media",
-        match: ["drawing", "creative", "express", "writing", "paint", "speak"],
-        suggestions: ["Graphic Designer", "Content Creator", "Journalist", "Animator"],
-        courses: ["Multimedia & Animation", "Digital Marketing", "Creative Writing"]
-      },
-      {
-        title: "Technology & Engineering",
-        match: ["machine", "code", "technical", "analyzing", "diagram", "electronics"],
-        suggestions: ["Software Developer", "Web Developer", "Electronics Technician", "AI/ML Engineer"],
-        courses: ["Full Stack Developer", "Python Programming", "AI Essentials"]
-      },
-      {
-        title: "Business & Management",
-        match: ["leadership", "management", "entrepreneurship", "business", "structured"],
-        suggestions: ["Business Analyst", "Marketing Manager", "Startup Founder", "HR Executive"],
-        courses: ["Business Analytics", "Marketing Management", "Entrepreneurship"]
-      },
-      {
-        title: "Healthcare & Wellness",
-        match: ["helping", "care", "health", "guiding", "mentor"],
-        suggestions: ["Nurse", "Clinical Assistant", "Psychologist", "Healthcare Manager"],
-        courses: ["Medical Coding", "General Duty Assistant", "Basic Psychology"]
-      },
-      {
-        title: "Technical & Skilled Trades",
-        match: ["assembling", "circuits", "hands", "tools", "fixing"],
-        suggestions: ["Automobile Technician", "Electrician", "CNC Operator", "Welder"],
-        courses: ["EV Service Technician", "CNC Programming", "Electrical Technician"]
-      },
-      {
-        title: "Education & Research",
-        match: ["mentor", "research", "knowledge", "teaching", "analysis"],
-        suggestions: ["Lecturer", "Education Consultant", "Policy Researcher", "Subject Expert"],
-        courses: ["Educational Psychology", "Research Skills", "Academic Content Writing"]
+<button id="downloadBtn">Download Result as PDF</button>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+  // Read answers from sessionStorage
+  const answers = JSON.parse(sessionStorage.getItem('careerTestAnswers'));
+  if (!answers || answers.length === 0) {
+    document.getElementById('resultContainer').innerHTML = "<p>No answers found. Please take the test first.</p>";
+    document.getElementById('downloadBtn').style.display = 'none';
+    throw new Error("No answers found");
+  }
+
+  // Define career clusters with related question indices and weights
+  // Example: You will need to adjust these according to your question design
+  const careerClusters = {
+    "Engineering & Technology": [0, 4, 10, 21, 24],
+    "Healthcare & Medicine": [14, 18, 14, 22],
+    "Creative Arts & Design": [5, 16],
+    "Business & Management": [12, 9, 19],
+    "Environment & Agriculture": [11, 20],
+    "Social Work & Community Service": [3, 23],
+    "Science & Research": [1, 17, 22],
+    "Physical & Outdoor Careers": [2, 13],
+    "Communication & Leadership": [6, 18, 19],
+    "Mathematics & Data Analysis": [7, 21],
+    "Animal Care & Veterinary": [20]
+  };
+
+  // Sample ASAP Kerala courses mapped to clusters (adjust as per actual courses)
+  const asapCourses = {
+    "Engineering & Technology": ["EVST Hykon Electrical Technician", "Solar Technician"],
+    "Healthcare & Medicine": ["Basic Health Care", "Pharmacy Assistant"],
+    "Creative Arts & Design": ["Graphic Design Basics", "Photography"],
+    "Business & Management": ["Retail Management", "Digital Marketing"],
+    "Environment & Agriculture": ["Organic Farming", "Environmental Monitoring"],
+    "Social Work & Community Service": ["Community Health Worker"],
+    "Science & Research": ["Lab Technician Course"],
+    "Physical & Outdoor Careers": ["Fitness Trainer", "Sports Coaching"],
+    "Communication & Leadership": ["Soft Skills & Communication"],
+    "Mathematics & Data Analysis": ["Data Entry Operator"],
+    "Animal Care & Veterinary": ["Animal Husbandry"]
+  };
+
+  // Calculate total scores for each career cluster
+  const clusterScores = {};
+  for (const cluster in careerClusters) {
+    let sum = 0;
+    careerClusters[cluster].forEach(idx => {
+      if (answers[idx] !== null && answers[idx] !== undefined) {
+        sum += answers[idx];
       }
-    ];
+    });
+    clusterScores[cluster] = sum;
+  }
 
-    function analyze(responses) {
-      const results = [];
+  // Get top 3 career clusters sorted by score descending
+  const topClusters = Object.entries(clusterScores)
+    .sort((a,b) => b[1] - a[1])
+    .slice(0,3);
 
-      for (const cluster of careerClusters) {
-        let score = 0;
-        for (const keyword of cluster.match) {
-          const matchingQuestions = responses.filter((_, i) =>
-            document.querySelectorAll(".question")[i]?.textContent?.toLowerCase()?.includes(keyword)
-          );
-          score += matchingQuestions.reduce((a, b) => a + b, 0);
-        }
-        results.push({ ...cluster, score });
+  // Generate HTML output
+  const resultContainer = document.getElementById('resultContainer');
+  resultContainer.innerHTML = `<h2>Top 3 Career Fields For You</h2>`;
+  topClusters.forEach(([cluster, score], i) => {
+    resultContainer.innerHTML += `<h3>${i+1}. ${cluster} (Score: ${score})</h3>`;
+    const courses = asapCourses[cluster] || [];
+    if (courses.length > 0) {
+      resultContainer.innerHTML += `<p>Relevant ASAP Kerala courses:</p><ul>` + courses.map(c => `<li>${c}</li>`).join('') + `</ul>`;
+    } else {
+      resultContainer.innerHTML += `<p>No ASAP Kerala courses available for this field.</p>`;
+    }
+  });
+
+  // Also add a personalized note or suggestions if you want here
+
+  // PDF download functionality using jsPDF
+  document.getElementById('downloadBtn').addEventListener('click', () => {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    doc.setFontSize(18);
+    doc.text("Career Aptitude Test Results", 14, 22);
+    doc.setFontSize(12);
+
+    let y = 40;
+    topClusters.forEach(([cluster, score], i) => {
+      doc.text(`${i+1}. ${cluster} (Score: ${score})`, 14, y);
+      y += 8;
+      const courses = asapCourses[cluster] || [];
+      if (courses.length > 0) {
+        doc.text("Relevant ASAP Kerala courses:", 14, y);
+        y += 8;
+        courses.forEach(course => {
+          doc.text("- " + course, 18, y);
+          y += 8;
+        });
+      } else {
+        doc.text("No ASAP Kerala courses available for this field.", 14, y);
+        y += 8;
       }
+      y += 5;
+    });
 
-      results.sort((a, b) => b.score - a.score);
-      return results.slice(0, 3);
-    }
+    doc.save("Career_Aptitude_Results.pdf");
+  });
+</script>
 
-    function showResults() {
-      const top3 = analyze(responses);
-      const area = document.getElementById("resultArea");
-      top3.forEach(cluster => {
-        const div = document.createElement("div");
-        div.className = "career";
-        div.innerHTML = `
-          <h3>${cluster.title}</h3>
-          <p><strong>Suggested Roles:</strong> ${cluster.suggestions.join(", ")}</p>
-          <p><strong>Recommended ASAP Kerala Courses:</strong> ${cluster.courses.join(", ")}</p>
-        `;
-        area.appendChild(div);
-      });
-    }
-
-    function downloadResult() {
-      const resultText = document.body.innerText;
-      const blob = new Blob([resultText], { type: 'text/plain' });
-      const link = document.createElement("a");
-      link.download = `${userData.name}_career_aptitude_result.txt`;
-      link.href = URL.createObjectURL(blob);
-      link.click();
-    }
-
-    showResults();
-  </script>
 </body>
 </html>
