@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Career Aptitude - Results</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f8f9fa;
+      padding: 30px;
+    }
+    .container {
+      max-width: 800px;
+      margin: auto;
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    }
+    h2 {
+      color: #2a4d69;
+    }
+    .career {
+      margin-bottom: 20px;
+    }
+    .career h3 {
+      margin: 10px 0 5px;
+      color: #1e3651;
+    }
+    .career p {
+      margin: 5px 0;
+    }
+    button {
+      margin-top: 30px;
+      padding: 12px;
+      background-color: #2a4d69;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #1e3651;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Your Career Aptitude Results</h2>
+    <div id="resultArea"></div>
+    <button onclick="downloadResult()">Download PDF</button>
+  </div>
+
+  <script>
+    const userData = JSON.parse(localStorage.getItem('userData'));
+    const responses = JSON.parse(localStorage.getItem('responses'));
+
+    const averageScore = responses.reduce((a, b) => a + b, 0) / responses.length;
+
+    // Sample career clusters with keywords
+    const careerClusters = [
+      {
+        title: "Creative & Media",
+        match: ["drawing", "creative", "express", "writing", "paint", "speak"],
+        suggestions: ["Graphic Designer", "Content Creator", "Journalist", "Animator"],
+        courses: ["Multimedia & Animation", "Digital Marketing", "Creative Writing"]
+      },
+      {
+        title: "Technology & Engineering",
+        match: ["machine", "code", "technical", "analyzing", "diagram", "electronics"],
+        suggestions: ["Software Developer", "Web Developer", "Electronics Technician", "AI/ML Engineer"],
+        courses: ["Full Stack Developer", "Python Programming", "AI Essentials"]
+      },
+      {
+        title: "Business & Management",
+        match: ["leadership", "management", "entrepreneurship", "business", "structured"],
+        suggestions: ["Business Analyst", "Marketing Manager", "Startup Founder", "HR Executive"],
+        courses: ["Business Analytics", "Marketing Management", "Entrepreneurship"]
+      },
+      {
+        title: "Healthcare & Wellness",
+        match: ["helping", "care", "health", "guiding", "mentor"],
+        suggestions: ["Nurse", "Clinical Assistant", "Psychologist", "Healthcare Manager"],
+        courses: ["Medical Coding", "General Duty Assistant", "Basic Psychology"]
+      },
+      {
+        title: "Technical & Skilled Trades",
+        match: ["assembling", "circuits", "hands", "tools", "fixing"],
+        suggestions: ["Automobile Technician", "Electrician", "CNC Operator", "Welder"],
+        courses: ["EV Service Technician", "CNC Programming", "Electrical Technician"]
+      },
+      {
+        title: "Education & Research",
+        match: ["mentor", "research", "knowledge", "teaching", "analysis"],
+        suggestions: ["Lecturer", "Education Consultant", "Policy Researcher", "Subject Expert"],
+        courses: ["Educational Psychology", "Research Skills", "Academic Content Writing"]
+      }
+    ];
+
+    function analyze(responses) {
+      const results = [];
+
+      for (const cluster of careerClusters) {
+        let score = 0;
+        for (const keyword of cluster.match) {
+          const matchingQuestions = responses.filter((_, i) =>
+            document.querySelectorAll(".question")[i]?.textContent?.toLowerCase()?.includes(keyword)
+          );
+          score += matchingQuestions.reduce((a, b) => a + b, 0);
+        }
+        results.push({ ...cluster, score });
+      }
+
+      results.sort((a, b) => b.score - a.score);
+      return results.slice(0, 3);
+    }
+
+    function showResults() {
+      const top3 = analyze(responses);
+      const area = document.getElementById("resultArea");
+      top3.forEach(cluster => {
+        const div = document.createElement("div");
+        div.className = "career";
+        div.innerHTML = `
+          <h3>${cluster.title}</h3>
+          <p><strong>Suggested Roles:</strong> ${cluster.suggestions.join(", ")}</p>
+          <p><strong>Recommended ASAP Kerala Courses:</strong> ${cluster.courses.join(", ")}</p>
+        `;
+        area.appendChild(div);
+      });
+    }
+
+    function downloadResult() {
+      const resultText = document.body.innerText;
+      const blob = new Blob([resultText], { type: 'text/plain' });
+      const link = document.createElement("a");
+      link.download = `${userData.name}_career_aptitude_result.txt`;
+      link.href = URL.createObjectURL(blob);
+      link.click();
+    }
+
+    showResults();
+  </script>
+</body>
+</html>
