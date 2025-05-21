@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Career Aptitude - Questions</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #eef2f5;
+      padding: 30px;
+    }
+    .container {
+      max-width: 700px;
+      margin: auto;
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h2 {
+      color: #2a4d69;
+      margin-bottom: 20px;
+    }
+    .question {
+      margin-bottom: 25px;
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+    }
+    input[type="radio"] {
+      margin-right: 10px;
+    }
+    button {
+      margin-top: 20px;
+      padding: 12px;
+      background-color: #2a4d69;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #1e3651;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Step 2: Career Aptitude Questions</h2>
+    <form id="questionForm"></form>
+    <button id="submitBtn">Submit Answers</button>
+  </div>
+
+  <script>
+    const userData = JSON.parse(localStorage.getItem('userData'));
+    const form = document.getElementById('questionForm');
+    const qualification = userData?.qualification;
+
+    const questionsByLevel = {
+      sslc: [
+        "I enjoy solving puzzles and logical problems.",
+        "I like working with my hands or using tools.",
+        "I enjoy drawing, painting or creative activities.",
+        "I am curious about how machines or things work.",
+        "I prefer practical tasks over reading/writing."
+      ],
+      plus2: [
+        "I like experimenting and analyzing results.",
+        "I enjoy helping people with their problems.",
+        "I find it easy to express myself in writing or speaking.",
+        "I prefer structured and rule-based environments.",
+        "I am interested in how technology impacts our world."
+      ],
+      iti: [
+        "I enjoy fixing or assembling mechanical things.",
+        "I feel comfortable working with circuits or machines.",
+        "I can follow technical diagrams easily.",
+        "I am interested in electrical or automotive systems.",
+        "I prefer real-world tasks over theory."
+      ],
+      polytechnic: [
+        "I like solving real-world problems using technical knowledge.",
+        "I enjoy working on team projects.",
+        "I can imagine how a building or system should work.",
+        "I prefer applied learning over classroom lectures.",
+        "I enjoy experimenting with code, electronics, or CAD tools."
+      ],
+      degree: [
+        "I enjoy solving complex problems using logic.",
+        "I am interested in business or entrepreneurship.",
+        "I like understanding social, political, or global issues.",
+        "I am drawn to research, innovation, and analysis.",
+        "I want a career that involves leadership or management."
+      ],
+      pg: [
+        "I seek mastery in a specialized area of knowledge.",
+        "I enjoy mentoring or guiding others.",
+        "I want to contribute to research or policy changes.",
+        "I see myself in leadership or consultancy roles.",
+        "I prefer independence and autonomy in work."
+      ]
+    };
+
+    const allQuestions = [];
+
+    // Merge question sets based on level
+    if (qualification === "sslc") {
+      allQuestions.push(...questionsByLevel.sslc);
+    } else if (qualification === "plus2") {
+      allQuestions.push(...questionsByLevel.sslc, ...questionsByLevel.plus2);
+    } else if (qualification === "iti") {
+      allQuestions.push(...questionsByLevel.sslc, ...questionsByLevel.iti);
+    } else if (qualification === "polytechnic") {
+      allQuestions.push(...questionsByLevel.sslc, ...questionsByLevel.polytechnic);
+    } else if (qualification === "degree") {
+      allQuestions.push(...questionsByLevel.sslc, ...questionsByLevel.plus2, ...questionsByLevel.degree);
+    } else if (qualification === "pg") {
+      allQuestions.push(...questionsByLevel.sslc, ...questionsByLevel.plus2, ...questionsByLevel.degree, ...questionsByLevel.pg);
+    }
+
+    // Render Questions
+    allQuestions.forEach((q, index) => {
+      const div = document.createElement('div');
+      div.classList.add('question');
+      div.innerHTML = `
+        <p><strong>Q${index + 1}:</strong> ${q}</p>
+        <label><input type="radio" name="q${index}" value="5" required> Strongly Agree</label>
+        <label><input type="radio" name="q${index}" value="4"> Agree</label>
+        <label><input type="radio" name="q${index}" value="3"> Neutral</label>
+        <label><input type="radio" name="q${index}" value="2"> Disagree</label>
+        <label><input type="radio" name="q${index}" value="1"> Strongly Disagree</label>
+      `;
+      form.appendChild(div);
+    });
+
+    document.getElementById('submitBtn').addEventListener('click', function () {
+      const formData = new FormData(form);
+      const scores = [];
+
+      for (let i = 0; i < allQuestions.length; i++) {
+        const value = formData.get(`q${i}`);
+        if (!value) {
+          alert("Please answer all questions.");
+          return;
+        }
+        scores.push(parseInt(value));
+      }
+
+      localStorage.setItem('responses', JSON.stringify(scores));
+      window.location.href = "results.html";
+    });
+  </script>
+</body>
+</html>
